@@ -1,0 +1,286 @@
+/* -------------------------------
+   🌐 RESET & GLOBAL CONFIG
+---------------------------------*/
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #121212;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  background: linear-gradient(120deg, #121212, #1c1c1c);
+}
+
+/* -------------------------------
+   🔗 LINK STYLE
+---------------------------------*/
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: none;
+}
+a:hover {
+  color: #535bf2;
+}
+
+/* -------------------------------
+   🔘 BUTTONS
+---------------------------------*/
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 600;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  color: white;
+  cursor: pointer;
+  transition: border-color 0.25s, background-color 0.3s;
+}
+button:hover {
+  border-color: #646cff;
+  background-color: #2a2a2a;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* -------------------------------
+   🧩 MAIN CONTAINER
+---------------------------------*/
+#root {
+  max-width: 960px;
+  width: 100%;
+  padding: 2rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* -------------------------------
+   🎥 LIVE CONNECTOR UI
+---------------------------------*/
+.live-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  max-width: 800px;
+  margin: auto;
+  background: #1e1e1e;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+}
+
+.live-connector input {
+  padding: 0.75rem 1rem;
+  font-size: 1.1rem;
+  width: 100%;
+  max-width: 350px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #2b2b2b;
+  color: #fff;
+}
+
+.live-connector button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #646cff, #3c3fff);
+  color: white;
+  cursor: pointer;
+  border: none;
+}
+
+.log-area {
+  width: 100%;
+  max-width: 700px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #121212;
+  padding: 1rem;
+  border-radius: 10px;
+  color: #f1f1f1;
+  font-family: monospace;
+  font-size: 0.95rem;
+  border: 1px solid #333;
+}
+
+.log-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 4px 0;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #444;
+}
+
+
+/* -------------------------------
+   💬 LOG AREA
+---------------------------------*/
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 1rem 0;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: white;
+}
+
+.stat-item {
+  background: #1e1e1e;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.notification-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+.notification {
+  background-color: #333;
+  color: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  animation: fadeIn 0.3s ease;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.avatar.small {
+  width: 28px;
+  height: 28px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.log-area {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 1rem;
+  background: #1a1a1a;
+  color: white;
+  font-family: monospace;
+  border-radius: 8px;
+  border: 1px solid #333;
+  margin-top: 1rem;
+}
+
+.log-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+
+/* -------------------------------
+   🧼 CARD / INFO BLOCK
+---------------------------------*/
+.card {
+  padding: 2em;
+  border-radius: 8px;
+  background: #2a2a2a;
+  margin: 1rem 0;
+  color: #ccc;
+}
+.read-the-docs {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+
+  body {
+    background: #f9f9f9;
+  }
+
+  .live-connector {
+    background: #ffffff;
+    color: #111;
+  }
+
+  .log-area {
+    background: #f3f3f3;
+    color: #222;
+    border-color: #ccc;
+  }
+}
+
+
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0%);
+    opacity: 1;
+  }
+}
+
+.avatar.small {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #555;
+}
+
+.username {
+  color: #4fc3f7; /* biru muda */
+  font-weight: 600;
+}
+
+.comment {
+  color: #e0e0e0;
+}

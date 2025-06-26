@@ -1,0 +1,29 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",                      
+    "dev": "nodemon index.js",                     
+    "vercel-dev": "node index.js",                 
+    "vercel-build": "echo \"Skipping build step\"", 
+    "lint": "eslint .",                        
+    "format": "prettier --write ."      
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "tiktok-live-connector": "^2.0.6-beta2",
+    "ws": "^8.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",        
+    "eslint": "^8.56.0", 
+    "prettier": "^3.2.5"
+  }
+}
