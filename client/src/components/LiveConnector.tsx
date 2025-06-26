@@ -21,7 +21,7 @@ const LiveConnector = () => {
     const socket = new WebSocket(
       process.env.NODE_ENV === 'development'
         ? 'ws://localhost:3001'
-        : 'wss://tiktok-live-server.onrender.com'
+        : 'wss://tiktok-live-connector-snay.onrender.com'
     );
 
     socket.onopen = () => {
