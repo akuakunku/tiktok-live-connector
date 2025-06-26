@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { connectToServer, disconnectFromServer } from '../services/wsClient';
 
 type LogItem = {
-  message: React.ReactNode;
+  message: React.ReactNode; 
   avatarUrl?: string;
 };
 
@@ -15,10 +15,9 @@ const LiveConnector = () => {
   const [giftCount, setGiftCount] = useState(0);
 
   const handleEvent = (type: string, data: any) => {
-    const timestamp = new Date().toLocaleTimeString();
     const avatarUrl = data?.user?.profilePicture?.url?.[0] || '';
     const uid = data?.uniqueId || '👻 unknown';
-    let message = '';
+    let message: React.ReactNode = ''; 
 
     switch (type) {
       case 'chat': {
@@ -34,7 +33,7 @@ const LiveConnector = () => {
             💬 <span className="username">{uid}</span>: <span className="comment">{data.comment}</span>
           </span>
         );
-        
+
         setLogs(prev => [
           { message, avatarUrl },
           ...(extra ? [{ message: extra, avatarUrl }] : []),
