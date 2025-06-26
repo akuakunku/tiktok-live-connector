@@ -5,7 +5,7 @@ const http = require('http');
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
 
-function withSafeUser(data) {
+function withSafeUser (data) {
   return {
     ...data,
     uniqueId: data?.uniqueId || data?.user?.uniqueId || 'anonymous',
@@ -31,7 +31,7 @@ wss.on('connection', (ws) => {
       });
 
       const forward = (type) => (data) => {
-        ws.send(JSON.stringify({ type, data: withSafeUser(data) }));
+        ws.send(JSON.stringify({ type, data: withSafeUser (data) }));
       };
 
       connection.on('chat', forward('chat'));
