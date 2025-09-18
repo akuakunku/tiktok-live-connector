@@ -53,7 +53,7 @@ button {
   transition: border-color 0.25s, background-color 0.3s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: #5b5c79;
   background-color: #2a2a2a;
 }
 button:focus,
@@ -88,6 +88,12 @@ button:focus-visible {
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
 }
 
+.connection-panel {
+  display: flex;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
 .live-connector input {
   padding: 0.75rem 1rem;
   font-size: 1.1rem;
@@ -97,6 +103,7 @@ button:focus-visible {
   border: 1px solid #444;
   background: #2b2b2b;
   color: #fff;
+  margin-right: 10px;
 }
 
 .live-connector button {
@@ -104,46 +111,30 @@ button:focus-visible {
   font-size: 1rem;
   font-weight: 600;
   border-radius: 8px;
-  background: linear-gradient(135deg, #646cff, #3c3fff);
+  background: linear-gradient(135deg, #262a77, #b6b433);
   color: white;
   cursor: pointer;
   border: none;
 }
 
-.log-area {
-  width: 100%;
-  max-width: 700px;
-  max-height: 300px;
-  overflow-y: auto;
-  background: #121212;
-  padding: 1rem;
-  border-radius: 10px;
-  color: #f1f1f1;
-  font-family: monospace;
-  font-size: 0.95rem;
-  border: 1px solid #333;
+/* -------------------------------
+   🟢🔴 STATUS INDICATOR
+---------------------------------*/
+.status-indicator {
+  font-weight: bold;
+  margin: 0.5rem 0;
 }
-
-.log-entry {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 4px 0;
+.status-indicator.connected {
+  color: #4caf50;
 }
-
-.avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #444;
+.status-indicator.disconnected {
+  color: #f44336;
 }
-
 
 /* -------------------------------
-   💬 LOG AREA
+   💬 STATS PANEL
 ---------------------------------*/
-.stats {
+.stats-panel {
   display: flex;
   justify-content: center;
   gap: 2rem;
@@ -152,14 +143,16 @@ button:focus-visible {
   font-size: 1.2rem;
   color: white;
 }
-
-.stat-item {
-  background: #1e1e1e;
+.stat {
+  background: #6228cf;
   padding: 0.5rem 1rem;
   border-radius: 8px;
   border: 1px solid #333;
 }
 
+/* -------------------------------
+   🔔 NOTIFICATIONS
+---------------------------------*/
 .notification-container {
   position: fixed;
   top: 1rem;
@@ -179,7 +172,11 @@ button:focus-visible {
   align-items: center;
   gap: 0.5rem;
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
-  animation: fadeIn 0.3s ease;
+  animation: slideIn 0.3s ease, fadeIn 0.3s ease;
+  transition: transform 0.2s;
+}
+.notification:hover {
+  transform: scale(1.02);
 }
 
 .avatar {
@@ -187,7 +184,6 @@ button:focus-visible {
   height: 36px;
   border-radius: 50%;
 }
-
 .avatar.small {
   width: 28px;
   height: 28px;
@@ -197,7 +193,14 @@ button:focus-visible {
   from { opacity: 0; transform: translateY(-10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes slideIn {
+  from { transform: translateX(50px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
 
+/* -------------------------------
+   📜 LOG AREA
+---------------------------------*/
 .log-area {
   max-height: 300px;
   overflow-y: auto;
@@ -217,6 +220,20 @@ button:focus-visible {
   margin-bottom: 0.25rem;
 }
 
+/* Custom scrollbar for logs & notifications */
+.log-entries::-webkit-scrollbar,
+.notifications-list::-webkit-scrollbar {
+  width: 8px;
+}
+.log-entries::-webkit-scrollbar-thumb,
+.notifications-list::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+.log-entries::-webkit-scrollbar-track,
+.notifications-list::-webkit-scrollbar-track {
+  background: #222;
+}
 
 /* -------------------------------
    🧼 CARD / INFO BLOCK
@@ -233,6 +250,9 @@ button:focus-visible {
   font-size: 0.9rem;
 }
 
+/* -------------------------------
+   🌞 LIGHT THEME
+---------------------------------*/
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -255,25 +275,63 @@ button:focus-visible {
   }
 }
 
-
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0%);
-    opacity: 1;
-  }
+/* -------------------------------
+   💬 LIVE CONNECTOR: KIRI KANAN LAYOUT
+---------------------------------*/
+.activity-log-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  max-width: 1200px;
 }
 
-.avatar.small {
-  width: 24px;
-  height: 24px;
+.event-log, .notifications-container {
+  flex: 1;
+  max-width: 48%;
+  background-color: #1e1e1e;
+  padding: 10px;
+  border-radius: 8px;
+  overflow-y: auto;
+}
+
+.event-log h3, .notifications-container h3 {
+  margin-top: 0;
+  color: white;
+}
+
+.log-entries, .notifications-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.log-entry, .notification {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #555;
+  margin-right: 10px;
+}
+
+.notification-text, .log-message {
+  font-size: 0.9em;
+  color: #f1f1f1;
+}
+
+@media (max-width: 768px) {
+  .activity-log-wrapper {
+    flex-direction: column;
+  }
+
+  .event-log, .notifications-container {
+    max-width: 100%;
+  }
 }
 
 .username {
