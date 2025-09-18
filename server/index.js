@@ -1,53 +1,66 @@
-const { TikTokLiveConnection } = require('tiktok-live-connector');
-const WebSocket = require('ws');
-const http = require('http');
+const { TikTokLiveConnection } = require("tiktok-live-connector");
+const WebSocket = require("ws");
+const http = require("http");
 
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
 
-function withSafeUser (data) {
+function withSafeUser(data) {
   return {
     ...data,
-    uniqueId: data?.uniqueId || data?.user?.uniqueId || 'anonymous',
+    uniqueId: data?.uniqueId || data?.user?.uniqueId || "anonymous",
   };
 }
 
-wss.on('connection', (ws) => {
-  console.log('[WS] Client connected');
+wss.on("connection", (ws) => {
+  console.log("[WS] Client connected");
   let connection = null;
 
-  ws.on('message', async (msg) => {
-    const parsed = JSON.parse(msg);
-    if (parsed.action === 'connect' && parsed.username) {
-      console.log(`[TikTok] Connecting to ${parsed.username}`);
+  ws.on("message", async (msg) => {
+    try {
+      const parsed = JSON.parse(msg);
 
-      connection = new TikTokLiveConnection(parsed.username);
+      if (parsed.action === "connect" && parsed.username) {
+        console.log(`[TikTok] Connecting to ${parsed.username}`);
 
-      connection.connect().then(() => {
-        console.log(`[TikTok] Connected to ${parsed.username}`);
-      }).catch(err => {
-        console.error('[TikTok] Connection failed:', err);
-        ws.send(JSON.stringify({ type: 'error', data: { message: 'Failed to connect' } }));
-      });
+        connection = new TikTokLiveConnection(parsed.username);
 
-      const forward = (type) => (data) => {
-        ws.send(JSON.stringify({ type, data: withSafeUser (data) }));
-      };
+        connection
+          .connect()
+          .then(() => {
+            console.log(`[TikTok] Connected to ${parsed.username}`);
+          })
+          .catch((err) => {
+            console.error("[TikTok] Connection failed:", err);
+            ws.send(
+              JSON.stringify({
+                type: "error",
+                data: { message: "Failed to connect" },
+              })
+            );
+          });
 
-      connection.on('chat', forward('chat'));
-      connection.on('gift', forward('gift'));
-      connection.on('like', forward('like'));
-      connection.on('follow', forward('follow'));
-      connection.on('share', forward('share'));
-      connection.on('viewer', forward('viewer'));
-      connection.on('streamEnd', () => {
-        ws.send(JSON.stringify({ type: 'end' }));
-      });
+        const forward = (type) => (data) => {
+          ws.send(JSON.stringify({ type, data: withSafeUser(data) }));
+        };
+
+        connection.on("chat", forward("chat"));
+        connection.on("gift", forward("gift"));
+        connection.on("like", forward("like"));
+        connection.on("follow", forward("follow"));
+        connection.on("share", forward("share"));
+        connection.on("viewer", forward("viewer"));
+        connection.on("streamEnd", () => {
+          ws.send(JSON.stringify({ type: "end" }));
+        });
+      }
+    } catch (err) {
+      console.error("[WS] Invalid message:", msg);
     }
   });
 
-  ws.on('close', () => {
-    console.log('[WS] Client disconnected');
+  ws.on("close", () => {
+    console.log("[WS] Client disconnected");
     if (connection) {
       connection.disconnect();
       connection = null;
@@ -55,6 +68,8 @@ wss.on('connection', (ws) => {
   });
 });
 
-server.listen(3001, () => {
-  console.log('✅ TikTok Live WebSocket Server running at ws://localhost:3001');
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
+
