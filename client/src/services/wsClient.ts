@@ -3,7 +3,7 @@ type EventCallback = (type: string, data: any) => void;
 let socket: WebSocket | null = null;
 
 export function connectToServer(username: string, onEvent: EventCallback) {
-  const url = import.meta.env.VITE_WS_URL; 
+  const url = import.meta.env.VITE_WS_URL;
 
   if (!url) {
     console.error("❌ VITE_WS_URL is not set");

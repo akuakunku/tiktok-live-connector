@@ -1,16 +1,24 @@
+const express = require("express");
+const app = express();
+const http = require("http").createServer(app);
+const { Server } = require("ws");
 const { TikTokLiveConnection } = require("tiktok-live-connector");
-const WebSocket = require("ws");
-const http = require("http");
 
-const server = http.createServer();
-const wss = new WebSocket.Server({ server });
+// Route utama untuk health-check (hindari error 502 di Render)
+app.get("/", (req, res) => {
+  res.send("✅ TikTok Live Connector running");
+});
 
+// Helper untuk pastikan data user aman
 function withSafeUser(data) {
   return {
     ...data,
     uniqueId: data?.uniqueId || data?.user?.uniqueId || "anonymous",
   };
 }
+
+// Setup WebSocket server
+const wss = new Server({ server: http });
 
 wss.on("connection", (ws) => {
   console.log("[WS] Client connected");
@@ -44,6 +52,7 @@ wss.on("connection", (ws) => {
           ws.send(JSON.stringify({ type, data: withSafeUser(data) }));
         };
 
+        // Forward TikTok events ke client WebSocket
         connection.on("chat", forward("chat"));
         connection.on("gift", forward("gift"));
         connection.on("like", forward("like"));
@@ -68,8 +77,8 @@ wss.on("connection", (ws) => {
   });
 });
 
+// Gunakan PORT dari Render atau default ke 3001 untuk lokal
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
+http.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
-
