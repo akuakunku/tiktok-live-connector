@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 type LogItem = {
   message: React.ReactNode;
   avatarUrl?: string;
 };
+
+const likeBuffer: Record<string, number> = {}; 
+let likeTimer: NodeJS.Timeout | null = null;
 
 const LiveConnector = () => {
   const [username, setUsername] = useState('');
@@ -72,6 +75,23 @@ const LiveConnector = () => {
     };
   }, [connected, username]);
 
+  const flushLikes = () => {
+    const entries = Object.entries(likeBuffer);
+    if (entries.length > 0) {
+      entries.forEach(([uid, count]) => {
+        setNotifications((prev) => [
+          {
+            message: `❤️ ${uid} liked the stream x${count}`,
+          },
+          ...prev,
+        ]);
+      });
+      for (let uid in likeBuffer) delete likeBuffer[uid];
+    }
+    likeTimer = null;
+  };
+
+
   const handleEvent = (type: string, data: any) => {
     const timestamp = new Date().toLocaleTimeString();
     const avatarUrl = data?.user?.profilePicture?.url?.[0] || data?.profilePictureUrl || '';
@@ -111,16 +131,14 @@ const LiveConnector = () => {
         }
         break;
 
-      case 'like':
+ case 'like': {
         setLikeCount((prev) => prev + 1);
-        setNotifications((prev) => [
-          {
-            message: `❤️ ${uid} liked the stream`,
-            avatarUrl,
-          },
-          ...prev,
-        ]);
+        likeBuffer[uid] = (likeBuffer[uid] || 0) + 1;
+        if (!likeTimer) {
+          likeTimer = setTimeout(flushLikes, 3000); 
+        }
         break;
+      }
 
       case 'follow':
         setNotifications((prev) => [
@@ -172,11 +190,20 @@ const LiveConnector = () => {
       ws.close();
     }
     setConnected(false);
+  
+
+    for (let uid in likeBuffer) delete likeBuffer[uid];
+    if (likeTimer) {
+      clearTimeout(likeTimer);
+      likeTimer = null;
+    }
+  
     setLogs((prev) =>
       [{ message: `🔌 Disconnected from ${username}` }, ...prev].slice(0, 200)
     );
-    setTimeout(() => setManualDisconnect(false), 1000); // reset flag
+    setTimeout(() => setManualDisconnect(false), 1000); 
   };
+  
 
   return (
     <div className="live-connector">
