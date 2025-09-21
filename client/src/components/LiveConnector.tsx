@@ -15,14 +15,13 @@ const LiveConnector = () => {
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [manualDisconnect, setManualDisconnect] = useState(false);
 
-  // Handle WebSocket connection
   useEffect(() => {
     if (!connected || !username) return;
 
     const socket = new WebSocket(
       process.env.NODE_ENV === 'development'
         ? 'ws://localhost:3001'
-        : 'wss://tiktok-live-connector-snay.onrender.com'
+        : 'wss://tiktok-live-server-lk1p.onrender.com'
     );
 
     socket.onopen = () => {
@@ -71,12 +70,11 @@ const LiveConnector = () => {
         socket.close();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected, username]);
 
   const handleEvent = (type: string, data: any) => {
     const timestamp = new Date().toLocaleTimeString();
-    const avatarUrl = data?.user?.profilePicture?.url?.[0] || '';
+    const avatarUrl = data?.user?.profilePicture?.url?.[0] || data?.profilePictureUrl || '';
     const uid = data?.uniqueId || '👻 unknown';
 
     switch (type) {
@@ -103,11 +101,9 @@ const LiveConnector = () => {
       case 'gift':
         if (data.repeatEnd) {
           setGiftCount((prev) => prev + (data.repeatCount || 1));
-          setNotifications((prev) => [
+          setNotifications(prev => [
             {
-              message: `🎁 ${uid} sent ${data.giftName || 'a gift'} x${
-                data.repeatCount || 1
-              }`,
+              message: `🎁 ${uid} sent ${data.giftName} x${data.repeatCount}`,
               avatarUrl,
             },
             ...prev,
