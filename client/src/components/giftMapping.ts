@@ -31,7 +31,6 @@ export const defaultMapping: GiftMapping = {
 export function useGiftMapping() {
   const [giftMapping, setGiftMapping] = useState<GiftMapping>(defaultMapping);
 
-  // Load dari localStorage saat pertama kali
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -44,7 +43,6 @@ export function useGiftMapping() {
     }
   }, []);
 
-  // Simpan otomatis ke localStorage tiap kali ada update
   const saveGiftMapping = (mapping: GiftMapping) => {
     setGiftMapping(mapping);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(mapping));

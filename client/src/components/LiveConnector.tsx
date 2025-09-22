@@ -22,16 +22,13 @@ const LiveConnector = () => {
   const [connected, setConnected] = useState(false);
   const [chatLogs, setChatLogs] = useState<ChatItem[]>([]);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [likeCount, setLikeCount] = useState(0);
-  const [giftCount, setGiftCount] = useState(0);
+
   const [giftPopup, setGiftPopup] = useState<{ avatarUrl: string; user: string; giftName: string } | null>(null);
   const [topLikers, setTopLikers] = useState<Record<string, UserStats>>({});
   const [topGifters, setTopGifters] = useState<Record<string, UserStats>>({});
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [manualDisconnect, setManualDisconnect] = useState(false);
   const { giftMapping, setGiftMapping } = useGiftMapping();
-
-  // ✅ pakai useRef untuk buffer & timer
   const likeBuffer = useRef<Record<string, number>>({});
   const likeTimer = useRef<NodeJS.Timeout | null>(null);
 
