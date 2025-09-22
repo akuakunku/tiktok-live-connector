@@ -1,22 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useGiftMapping } from "./giftMapping";
 
-type LogItem = {
+type ChatItem = {
   message: React.ReactNode;
   avatarUrl?: string;
 };
 
-const likeBuffer: Record<string, number> = {}; 
-let likeTimer: NodeJS.Timeout | null = null;
+type ActivityItem = {
+  message: React.ReactNode;
+  avatarUrl?: string;
+};
+
+type UserStats = {
+  count: number;
+  avatarUrl?: string;
+  lastGift?: string;
+};
 
 const LiveConnector = () => {
   const [username, setUsername] = useState('');
   const [connected, setConnected] = useState(false);
-  const [logs, setLogs] = useState<LogItem[]>([]);
-  const [notifications, setNotifications] = useState<LogItem[]>([]);
+  const [chatLogs, setChatLogs] = useState<ChatItem[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [likeCount, setLikeCount] = useState(0);
   const [giftCount, setGiftCount] = useState(0);
+  const [giftPopup, setGiftPopup] = useState<{ avatarUrl: string; user: string; giftName: string } | null>(null);
+  const [topLikers, setTopLikers] = useState<Record<string, UserStats>>({});
+  const [topGifters, setTopGifters] = useState<Record<string, UserStats>>({});
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [manualDisconnect, setManualDisconnect] = useState(false);
+  const { giftMapping, setGiftMapping } = useGiftMapping();
+
+  // ✅ pakai useRef untuk buffer & timer
+  const likeBuffer = useRef<Record<string, number>>({});
+  const likeTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!connected || !username) return;
@@ -29,13 +46,8 @@ const LiveConnector = () => {
 
     socket.onopen = () => {
       console.log('WebSocket connected');
-      socket.send(
-        JSON.stringify({
-          action: 'connect',
-          username,
-        })
-      );
-      setLogs((prev) =>
+      socket.send(JSON.stringify({ action: 'connect', username }));
+      setChatLogs((prev) =>
         [{ message: `🔗 Connected to ${username}` }, ...prev].slice(0, 200)
       );
     };
@@ -51,7 +63,7 @@ const LiveConnector = () => {
 
     socket.onerror = (error) => {
       console.error('WebSocket error:', error);
-      setLogs((prev) =>
+      setChatLogs((prev) =>
         [{ message: '❌ WebSocket connection error' }, ...prev].slice(0, 200)
       );
     };
@@ -59,7 +71,7 @@ const LiveConnector = () => {
     socket.onclose = () => {
       console.log('WebSocket disconnected');
       if (connected && !manualDisconnect) {
-        setLogs((prev) =>
+        setChatLogs((prev) =>
           [{ message: '📡 Attempting to reconnect...' }, ...prev].slice(0, 200)
         );
         setTimeout(() => setConnected(true), 3000);
@@ -69,28 +81,32 @@ const LiveConnector = () => {
     setWs(socket);
 
     return () => {
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.close();
-      }
+      if (socket.readyState === WebSocket.OPEN) socket.close();
     };
   }, [connected, username]);
 
   const flushLikes = () => {
-    const entries = Object.entries(likeBuffer);
+    const entries = Object.entries(likeBuffer.current);
     if (entries.length > 0) {
       entries.forEach(([uid, count]) => {
-        setNotifications((prev) => [
-          {
-            message: `❤️ ${uid} liked the stream x${count}`,
-          },
+        setActivities((prev) => [
+          { message: `❤️ ${uid} liked the stream x${count}` },
           ...prev,
         ]);
-      });
-      for (let uid in likeBuffer) delete likeBuffer[uid];
-    }
-    likeTimer = null;
-  };
 
+        setTopLikers((prev) => {
+          const updated = { ...prev };
+          updated[uid] = {
+            count: (updated[uid]?.count || 0) + count,
+            avatarUrl: updated[uid]?.avatarUrl,
+          };
+          return updated;
+        });
+      });
+      likeBuffer.current = {};
+    }
+    likeTimer.current = null;
+  };
 
   const handleEvent = (type: string, data: any) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -106,7 +122,7 @@ const LiveConnector = () => {
           </span>
         );
 
-        setLogs((prev) =>
+        setChatLogs((prev) =>
           [
             { message, avatarUrl },
             ...(data.comment?.trim().toLowerCase() === '!help'
@@ -120,48 +136,64 @@ const LiveConnector = () => {
 
       case 'gift':
         if (data.repeatEnd) {
-          setGiftCount((prev) => prev + (data.repeatCount || 1));
-          setNotifications(prev => [
-            {
-              message: `🎁 ${uid} sent ${data.giftName} x${data.repeatCount}`,
+          const count = data.repeatCount || 1;
+          setGiftCount((prev) => prev + count);
+
+          const giftId = data.giftId;
+          const giftName =
+            giftMapping[giftId] || data.giftName || `Unknown (${giftId})`;
+
+          // auto add mapping
+          if (!giftMapping[giftId] && data.giftName) {
+            const updated = { ...giftMapping, [giftId]: data.giftName };
+            setGiftMapping(updated);
+            console.log(`✅ Gift baru ditambahkan: ${giftId} → ${data.giftName}`);
+          }
+
+          // update top gifters
+          setTopGifters((prev) => {
+            const updated = { ...prev };
+            updated[uid] = {
+              count: (updated[uid]?.count || 0) + count,
               avatarUrl,
-            },
+              lastGift: giftName,
+            };
+            return updated;
+          });
+
+          // update activity
+          setActivities((prev) => [
+            { message: `🎁 ${uid} sent ${giftName} x${count}`, avatarUrl },
             ...prev,
           ]);
+
+          // popup
+          setGiftPopup({ avatarUrl, user: uid, giftName });
+          setTimeout(() => setGiftPopup(null), 10000);
         }
         break;
 
- case 'like': {
+      case 'like': {
         setLikeCount((prev) => prev + 1);
-        likeBuffer[uid] = (likeBuffer[uid] || 0) + 1;
-        if (!likeTimer) {
-          likeTimer = setTimeout(flushLikes, 3000); 
+        likeBuffer.current[uid] = (likeBuffer.current[uid] || 0) + 1;
+
+        setTopLikers((prev) => {
+          const updated = { ...prev };
+          updated[uid] = {
+            count: (updated[uid]?.count || 0) + 1,
+            avatarUrl,
+          };
+          return updated;
+        });
+
+        if (!likeTimer.current) {
+          likeTimer.current = setTimeout(flushLikes, 3000);
         }
         break;
       }
 
-      case 'follow':
-        setNotifications((prev) => [
-          {
-            message: `👤 ${uid} followed`,
-            avatarUrl,
-          },
-          ...prev,
-        ]);
-        break;
-
-      case 'share':
-        setNotifications((prev) => [
-          {
-            message: `🔁 ${uid} shared the stream`,
-            avatarUrl,
-          },
-          ...prev,
-        ]);
-        break;
-
       case 'end':
-        setLogs((prev) =>
+        setChatLogs((prev) =>
           [{ message: '🚫 Live stream ended' }, ...prev].slice(0, 200)
         );
         setConnected(false);
@@ -174,7 +206,7 @@ const LiveConnector = () => {
 
   const handleConnect = () => {
     if (!username.trim()) {
-      setLogs((prev) =>
+      setChatLogs((prev) =>
         [{ message: '⚠️ Please enter a username' }, ...prev].slice(0, 200)
       );
       return;
@@ -190,20 +222,18 @@ const LiveConnector = () => {
       ws.close();
     }
     setConnected(false);
-  
 
-    for (let uid in likeBuffer) delete likeBuffer[uid];
-    if (likeTimer) {
-      clearTimeout(likeTimer);
-      likeTimer = null;
+    likeBuffer.current = {};
+    if (likeTimer.current) {
+      clearTimeout(likeTimer.current);
+      likeTimer.current = null;
     }
-  
-    setLogs((prev) =>
+
+    setChatLogs((prev) =>
       [{ message: `🔌 Disconnected from ${username}` }, ...prev].slice(0, 200)
     );
-    setTimeout(() => setManualDisconnect(false), 1000); 
   };
-  
+
 
   return (
     <div className="live-connector">
@@ -216,6 +246,7 @@ const LiveConnector = () => {
           placeholder="Enter TikTok username"
           className="username-input"
         />
+
         <button
           onClick={connected ? handleDisconnect : handleConnect}
           className={connected ? 'disconnect-btn' : 'connect-btn'}
@@ -228,27 +259,13 @@ const LiveConnector = () => {
         Status: {connected ? '🟢 Connected' : '🔴 Disconnected'}
       </div>
 
-      <div className="stats-panel">
-        <div className="stat">
-          <span role="img" aria-label="Likes">
-            ❤️
-          </span>
-          <span>{likeCount}</span>
-        </div>
-        <div className="stat">
-          <span role="img" aria-label="Gifts">
-            🎁
-          </span>
-          <span>{giftCount}</span>
-        </div>
-      </div>
-
       <div className="activity-log-wrapper">
-        <div className="event-log">
-          <h3>Event Log</h3>
+        {/* Chat Section */}
+        <div className="chat-log">
+          <h3>Chat</h3>
           <div className="log-entries">
-            {logs.map((log, idx) => (
-              <div key={`log-${idx}`} className="log-entry">
+            {chatLogs.slice(-20).map((log, idx) => (
+              <div key={`chat-${idx}`} className="log-entry">
                 {log.avatarUrl && (
                   <img
                     src={log.avatarUrl}
@@ -263,11 +280,12 @@ const LiveConnector = () => {
           </div>
         </div>
 
-        <div className="notifications-container">
-          <h3>Recent Activity</h3>
+        {/* Activities Section */}
+        <div className="activities-container">
+          <h3>Likes & Gifts</h3>
           <div className="notifications-list">
-            {notifications.slice(0, 5).map((note, idx) => (
-              <div key={`note-${idx}`} className="notification">
+            {activities.slice(-20).map((note, idx) => (
+              <div key={`activity-${idx}`} className="notification">
                 {note.avatarUrl && (
                   <img
                     src={note.avatarUrl}
@@ -282,6 +300,51 @@ const LiveConnector = () => {
           </div>
         </div>
       </div>
+      <div className="leaderboard">
+        <div className="leaderboard-section">
+          <h3>🏆 Top Likers</h3>
+          <ul>
+            {Object.entries(topLikers)
+              .sort((a, b) => b[1].count - a[1].count)
+              .slice(0, 10)
+              .map(([user, data]) => (
+                <li key={user} className="leaderboard-item">
+                  {data.avatarUrl && (
+                    <img src={data.avatarUrl} alt="avatar" className="avatar" />
+                  )}
+                  ❤️ {user}: {data.count}
+                </li>
+              ))}
+          </ul>
+        </div>
+
+        <div className="leaderboard-section">
+          <h3>🎁 Top Gifters</h3>
+          <ul>
+            {Object.entries(topGifters)
+              .sort((a, b) => b[1].count - a[1].count)
+              .slice(0, 10)
+              .map(([user, data]) => (
+                <li key={user} className="leaderboard-item">
+                  {data.avatarUrl && (
+                    <img src={data.avatarUrl} alt="avatar" className="avatar" />
+                  )}
+                  🎁 {user}: {data.count} ({data.lastGift})
+
+                </li>
+              ))}
+          </ul>
+        </div>
+      </div>
+      {giftPopup && (
+        <div className="gift-popup">
+          <img src={giftPopup.avatarUrl} alt="avatar" className="popup-avatar" />
+          <div className="popup-text">
+            🎁 {giftPopup.user} sent {giftPopup.giftName}!
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
