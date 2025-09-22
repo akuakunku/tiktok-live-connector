@@ -22,7 +22,8 @@ const LiveConnector = () => {
   const [connected, setConnected] = useState(false);
   const [chatLogs, setChatLogs] = useState<ChatItem[]>([]);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
-
+  const [likeCount, setLikeCount] = useState(0);
+  const [giftCount, setGiftCount] = useState(0);
   const [giftPopup, setGiftPopup] = useState<{ avatarUrl: string; user: string; giftName: string } | null>(null);
   const [topLikers, setTopLikers] = useState<Record<string, UserStats>>({});
   const [topGifters, setTopGifters] = useState<Record<string, UserStats>>({});
@@ -256,6 +257,7 @@ const LiveConnector = () => {
         Status: {connected ? '🟢 Connected' : '🔴 Disconnected'}
       </div>
 
+
       <div className="activity-log-wrapper">
         {/* Chat Section */}
         <div className="chat-log">
@@ -297,6 +299,9 @@ const LiveConnector = () => {
           </div>
         </div>
       </div>
+      <div className="stats">
+  ❤️ Total Likes: {likeCount} | 🎁 Total Gifts: {giftCount}
+</div>
       <div className="leaderboard">
         <div className="leaderboard-section">
           <h3>🏆 Top Likers</h3>
